@@ -529,7 +529,7 @@ c
       ntot2 = lx2*ly2*lz2*nelv
 c
 c     add a diagonal term to the operator for the ON/on/O/o boundary conditions if the adjoint equations are solved
-      call adjobc(h2)
+      call seth2bc (h2)
       call bcdirvc (vxp(1,jp),vyp(1,jp),vzp(1,jp)
      $             ,v1mask,v2mask,v3mask)
       call extrapprp(prextr)
@@ -1358,68 +1358,4 @@ c-----------------------------------------------------------------------
 
       return
       end
-c-----------------------------------------------------------------------
-
-      subroutine adjobc(h2)
-      implicit none
-
-      include 'SIZE'
-      include 'MASS'
-      include 'PARALLEL'
-      include 'SOLN'
-      include 'ADJOINT'
-      include 'TSTEP'
-      include 'INPUT'
-      include 'GEOM'
-      
-      real h2(lx1,ly1,lz1,1)
-      character cb*3
-      integer nfaces,nxyz,nel,ntot,iel,iface,ieg
-      integer kx1,kx2,ky1,ky2,kz1,kz2,ix,iy,iz,ia
-      logical ifalgn,ifnorx,ifnory,ifnorz
-      real robcx,robcy,robcz
-      
-      nfaces=2*ndim
-      nxyz  =nx1*ny1*nz1
-      nel   =nelfld(ifield)
-      ntot  =nxyz*nel
-c
-c     Add diagonal terms to the matrix for adjoint O/o and ON/on
-c     boundary conditions. Does nothing for direct equations.
-c      
-      if (ifadj) then
-c
-c     check which faces have O/o/ON/on conditions and modify the H2
-c     matrix accordingly. The equations must include a Robin term related
-c     to the base flow velocity normal to the wall.
-c         
-         do iel=1,nel
-            do iface=1,nfaces
-               ieg=lglel(iel)
-               cb = cbc(iface,iel,ifield)
-               if (cb.eq.'O  '.or.cb.eq.'o  '
-     &              .or.cb.eq.'ON '.or.cb.eq.'on ') then
-                  ia = 0
-c     
-c     Loop on the points of the face
-                  call facind(kx1,kx2,ky1,ky2,kz1,kz2,nx1,ny1,nz1,iface)
-                  do iz=kz1,kz2
-                     do iy=ky1,ky2
-                        do ix=kx1,kx2
-                           ia = ia + 1
-c     add an U_n coefficient to H2
-                           h2(ix,iy,iz,iel)=h2(ix,iy,iz,iel)+
-     &                          area(ia,1,iface,iel)/bm1(ix,iy,iz,iel)*
-     &                          (unx(ia,1,iface,iel)*vx(ix,iy,iz,iel)
-     &                          +uny(ia,1,iface,iel)*vy(ix,iy,iz,iel)
-     &                          +unz(ia,1,iface,iel)*vz(ix,iy,iz,iel))
-                        end do
-                     end do
-                  end do
-               end if
-            end do
-         end do
-      end if
-         
-      end subroutine
 c-----------------------------------------------------------------------

@@ -831,6 +831,7 @@ c     ibc = 2  <==>  Neumann,
          if (cbc(ied,e,ifield).eq.'ON ') ibc = 1
          if (cbc(ied,e,ifield).eq.'o  ') ibc = 1
          if (cbc(ied,e,ifield).eq.'on ') ibc = 1
+         if (cbc(ied,e,ifield).eq.'bn ') ibc = 1
          if (cbc(ied,e,ifield).eq.'MS ') ibc = 1
          if (cbc(ied,e,ifield).eq.'ms ') ibc = 1
          if (cbc(ied,e,ifield).eq.'MM ') ibc = 1

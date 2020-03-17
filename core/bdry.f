@@ -48,7 +48,7 @@ C
             CALL CHKNORD (IFALGN,IFNORX,IFNORY,IFNORZ,IFC,IEL)
             CALL CHKCBC  (CB,IEL,IFC,IFALGN,IERR)
             IF  (CB.EQ.'O  ' .OR. CB.EQ.'o  ' .OR.
-     $           CB.EQ.'ON ' .OR. CB.EQ.'on ' .OR.
+     $           CB.EQ.'ON ' .OR. CB.EQ.'on ' .OR. CB.EQ.'bn ' .OR.
      $           CB.EQ.'S  ' .OR. CB.EQ.'s  ' .OR.
      $           CB.EQ.'SL ' .OR. CB.EQ.'sl ' .OR.
      $           CB.EQ.'MM ' .OR. CB.EQ.'mm ' .OR.
@@ -63,7 +63,8 @@ C
      $           CB.EQ.'MM ' .OR. CB.EQ.'mm ' .OR.
      $           CB.EQ.'MS ' .OR. CB.EQ.'ms ' .OR.
      $           CB.EQ.'O  ' .OR. CB.EQ.'o  ' .OR.
-     $           CB.EQ.'ON ' .OR. CB.EQ.'on ')  THEN
+     $           CB.EQ.'ON ' .OR. CB.EQ.'on ' .OR.
+     $           CB.EQ.'bn ')  THEN
                                               IFQINP(IFC,IEL) = .TRUE.
             ENDIF
             IF  (CB.EQ.'MS ' .OR. CB.EQ.'ms ' .OR.
@@ -295,7 +296,8 @@ C     Laplacian formulation only
      $     CB.EQ.'MSI' .OR.  CB.EQ.'msi'    )                GOTO 9001
 
        IF ( .NOT.IFALGN .AND.
-     $    (CB.EQ.'ON ' .OR.  CB.EQ.'on ' .OR. CB.EQ.'SYM') ) GOTO 9010
+     $     (CB.EQ.'ON ' .OR.  CB.EQ.'on ' .OR. CB.EQ.'bn '
+     $     .OR. CB.EQ.'SYM') ) GOTO 9010
 
       RETURN
 
@@ -365,7 +367,7 @@ C
          do 50 iface=1,nfaces
             cb=cbc(iface,iel,ifield)
             if (cb.eq.'O  ' .or. cb.eq.'ON ' .or.
-     $          cb.eq.'o  ' .or. cb.eq.'on ')
+     $          cb.eq.'o  ' .or. cb.eq.'on ' .or. cb.eq.'bn ')
      $         call facev(pmask,iel,iface,0.0,lx1,ly1,lz1)
    50    continue
          if (nelt.gt.nelv) then
@@ -415,7 +417,7 @@ C
              GOTO 100
          ENDIF
 
-         IF (CB.EQ.'ON ' .OR. CB.EQ.'on ') THEN
+         IF (CB.EQ.'ON ' .OR. CB.EQ.'on ' .OR. CB.EQ.'bn ') THEN
              IF ( IFNORY .OR. IFNORZ )
      $            CALL FACEV (V1MASK,IEL,IFACE,0.0,lx1,ly1,lz1)
              IF ( .NOT.IFALGN .OR. IFNORX .OR. IFNORZ )
@@ -655,7 +657,7 @@ c     write(6,*) 'BCDIRV: ifield',ifield
      $                        TMP3(1,1,1,IE),IE,IFACE)
             ENDIF
 
-            IF (CB.EQ.'ON ' .OR. CB.EQ.'on ') then   ! 5/21/01 pff
+            IF (CB.EQ.'ON ' .OR. CB.EQ.'on ' .OR. CB.EQ.'bn ') then   ! 5/21/01 pff
                 ifonbc =.true.
                 CALL FACEIV ('v  ',TMP1(1,1,1,IE),TMP2(1,1,1,IE),
      $                       TMP3(1,1,1,IE),IE,IFACE,lx1,ly1,lz1)
@@ -1006,9 +1008,11 @@ C
       INCLUDE 'SIZE'
       INCLUDE 'NEKUSE'
       INCLUDE 'PARALLEL'
+      INCLUDE 'INPUT'
 C
       dimension v1(nx,ny,nz),v2(nx,ny,nz),v3(nx,ny,nz)
       character cb*3
+      logical   ifalgn,ifnorx,ifnory,ifnorz
 c
       character*1 cb1(3)
 c
@@ -1111,6 +1115,22 @@ C
             V2(IX,IY,IZ) = 0.0
             V3(IX,IY,IZ) = 0.0
   270    CONTINUE
+C
+      ELSEIF (CB.EQ.'bn ') THEN
+C
+         call chknord (ifalgn,ifnorx,ifnory,ifnorz,iface,iel)
+         DO 290 IZ=KZ1,KZ2
+         DO 290 IY=KY1,KY2
+         DO 290 IX=KX1,KX2
+            if (optlevel.le.2) CALL NEKASGN (IX,IY,IZ,IEL)
+            CALL USERBC  (IX,IY,IZ,IFACE,IEG)
+C     gc 2020-03-17: add a -rho*un^2 term for the Bernoulli normal condition
+            if (ifnorx) v1(ix,iy,iz) = -pa-param(1)*ux**2
+            if (ifnory) v1(ix,iy,iz) = -pa-param(1)*uy**2
+            if (ifnorz) v1(ix,iy,iz) = -pa-param(1)*uz**2
+            v2(ix,iy,iz) = 0.0
+            v3(ix,iy,iz) = 0.0
+  290    CONTINUE
 C
       ENDIF
 C
@@ -1253,7 +1273,7 @@ C
              CALL GLOBROT (TRX,TRY,TRZ,IEL,IFC)
              GOTO 120
          ENDIF
-         IF (CB.EQ.'on ' .OR. CB.EQ.'o  ') THEN
+         IF (CB.EQ.'on ' .OR. CB.EQ.'o  ' .OR. CB.EQ.'bn ') THEN
              CALL FACEIV  (CB,TRX,TRY,TRZ,IEL,IFC,lx1,ly1,lz1)
              CALL FACCVS  (TRX,TRY,TRZ,AREA(1,1,IFC,IEL),IFC)
              CALL GLOBROT (TRX,TRY,TRZ,IEL,IFC)
@@ -2180,6 +2200,87 @@ c
         enddo
         enddo
       endif
+
+      return
+      end
+c-----------------------------------------------------------------------
+      subroutine seth2bc(h2)
+C
+C     sets diagonal terms for boundary conditions if required
+C
+      include 'SIZE'
+      include 'MASS'
+      include 'PARALLEL'
+      include 'SOLN'
+      include 'ADJOINT'
+      include 'TSTEP'
+      include 'INPUT'
+      include 'NEKUSE'
+      include 'GEOM'
+      
+      real      h2(lx1,ly1,lz1,1)
+      character cb*3
+      integer   nfaces,nxyz,nel,ntot,iel,iface,ieg
+      integer   kx1,kx2,ky1,ky2,kz1,kz2,ix,iy,iz,ia
+      logical   ifalgn,ifnorx,ifnory,ifnorz
+      real      unorm
+      
+      nfaces=2*ldim
+      nxyz  =nx1*ny1*nz1
+      nel   =nelfld(ifield)
+      ntot  =nxyz*nel
+      
+      do iel=1,nelv
+         ieg=lglel(iel)
+         do iface=1,nfaces
+            cb = cbc(iface,iel,ifield)
+c
+c     Adjoint O/o/ON/on conditions
+c
+            if ((cb.eq.'O  '.or.cb.eq.'o  '.or.cb.eq.'ON '.or.
+     $           cb.eq.'on ').and.ifadj) then
+               ia = 0
+c     Loop on the points of the face
+               call facind(kx1,kx2,ky1,ky2,kz1,kz2,nx1,ny1,nz1,iface)
+               do iz=kz1,kz2
+                  do iy=ky1,ky2
+                     do ix=kx1,kx2
+                        ia = ia + 1
+c     add an U_n (baseflow velocity) coefficient to H2
+                        h2(ix,iy,iz,iel)=h2(ix,iy,iz,iel)+
+     &                       area(ia,1,iface,iel)/bm1(ix,iy,iz,iel)*
+     &                       (unx(ia,1,iface,iel)*vx(ix,iy,iz,iel)
+     &                       +uny(ia,1,iface,iel)*vy(ix,iy,iz,iel)
+     &                       +unz(ia,1,iface,iel)*vz(ix,iy,iz,iel))
+                     end do
+                  end do
+               end do
+            end if
+c
+c     bn condition
+c
+            if (cb.eq.'bn ') then
+               ia = 0
+               call chknord (ifalgn,ifnorx,ifnory,ifnorz,iface,iel)
+               call facind(kx1,kx2,ky1,ky2,kz1,kz2,nx1,ny1,nz1,iface)
+               do iz=kz1,kz2
+                  do iy=ky1,ky2
+                     do ix=kx1,kx2
+                        ia = ia + 1
+c     add an un (from userbc) coefficient to H2
+                        if (optlevel.le.2) call nekasgn (ix,iy,iz,iel)
+                        call userbc(ix,iy,iz,iface,ieg)
+                        if(ifnorx) unorm=ux
+                        if(ifnory) unorm=uy
+                        if(ifnorz) unorm=uz
+                        h2(ix,iy,iz,iel)=h2(ix,iy,iz,iel)+param(1)*unorm
+     &                       *area(ia,1,iface,iel)/bm1(ix,iy,iz,iel)
+                     end do
+                  end do
+               end do
+            end if
+         enddo
+      enddo
 
       return
       end

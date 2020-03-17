@@ -85,6 +85,7 @@ C---------------------------------------------------------------------
       NTOT1 = lx1*ly1*lz1*NELV
       NTOT2 = lx2*ly2*lz2*NELV
       if (igeom.eq.2) CALL LAGVEL 
+      call seth2bc (h2)
       CALL BCDIRVC (VX,VY,VZ,v1mask,v2mask,v3mask)
       CALL BCNEUTR
 C
