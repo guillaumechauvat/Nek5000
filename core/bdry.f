@@ -2270,10 +2270,10 @@ c
 c     add an un (from userbc) coefficient to H2
                         if (optlevel.le.2) call nekasgn (ix,iy,iz,iel)
                         call userbc(ix,iy,iz,iface,ieg)
-                        if(ifnorx) unorm=ux
-                        if(ifnory) unorm=uy
-                        if(ifnorz) unorm=uz
-                        h2(ix,iy,iz,iel)=h2(ix,iy,iz,iel)+param(1)*unorm
+                        if(ifnorx) unorm=ux*unx(ia,1,iface,iel)
+                        if(ifnory) unorm=uy*uny(ia,1,iface,iel)
+                        if(ifnorz) unorm=uz*unz(ia,1,iface,iel)
+                        h2(ix,iy,iz,iel)=h2(ix,iy,iz,iel)-param(1)*unorm
      &                       *area(ia,1,iface,iel)/bm1(ix,iy,iz,iel)
                      end do
                   end do
