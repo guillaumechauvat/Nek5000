@@ -870,6 +870,9 @@ c
      $ ,             h2    (lx1,ly1,lz1,lelv)
       common /scrhi/ h2inv (lx1,ly1,lz1,lelv)
       COMMON /SCRCH/ PREXTR(LX2,LY2,LZ2,LELV)
+      parameter(nset = 1 + lpert/lelv)
+      common /orthovp/ psetp(lx2*ly2*lz2*lelv*mxprev,nset)
+      common /orthbip/ nprvp(nset)
       logical ifprjp
 
 c
@@ -901,11 +904,11 @@ C******************************************************************
 
       ! Most likely, the following can be commented out. (pff, 1/6/2010)
 c     if (npert.gt.1.or.ifbase)            ifprjp=.false.
-      if (ifprjp)   call setrhs  (dp,h1,h2,h2inv)
+      if (ifprjp)   call setrhsp  (dp,h1,h2,h2inv,psetp(1,jp),nprvp(jp))
 
                     call esolver (dp,h1,h2,h2inv,intype)
 
-      if (ifprjp)   call gensoln (dp,h1,h2,h2inv)
+      if (ifprjp)   call gensolnp (dp,h1,h2,h2inv,psetp(1,jp),nprvp(jp))
 
 cNOTE:  The "cpff" comments added 11/24/17 to avoid old-style projection,
 cNOTE:  which should be replaced with something more updated.
