@@ -187,7 +187,7 @@ C
 
 C     Orthogonalize rhs against previous rhs and normalize
 
-      write(6,*) istep,nprev,' call econj2'
+c      write(6,*) istep,nprev,' call econj2'
       call econj (nprev,h1,h2,h2inv,ierr)
 C     call echeck(nprev,h1,h2,h2inv,intetype)
 C

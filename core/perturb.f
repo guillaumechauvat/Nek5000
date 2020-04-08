@@ -901,11 +901,11 @@ C******************************************************************
 
       ! Most likely, the following can be commented out. (pff, 1/6/2010)
 c     if (npert.gt.1.or.ifbase)            ifprjp=.false.
-cpff  if (ifprjp)   call setrhs  (dp,h1,h2,h2inv)
+      if (ifprjp)   call setrhs  (dp,h1,h2,h2inv)
 
                     call esolver (dp,h1,h2,h2inv,intype)
 
-cpff  if (ifprjp)   call gensoln (dp,h1,h2,h2inv)
+      if (ifprjp)   call gensoln (dp,h1,h2,h2inv)
 
 cNOTE:  The "cpff" comments added 11/24/17 to avoid old-style projection,
 cNOTE:  which should be replaced with something more updated.
