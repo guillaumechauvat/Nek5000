@@ -870,7 +870,7 @@ c
      $ ,             h2    (lx1,ly1,lz1,lelv)
       common /scrhi/ h2inv (lx1,ly1,lz1,lelv)
       COMMON /SCRCH/ PREXTR(LX2,LY2,LZ2,LELV)
-      parameter(nset = 1 + lpert/lelv)
+      parameter(nset = lpert/lelv)
       common /orthovp/ psetp(lx2*ly2*lz2*lelv*mxprev,nset)
       common /orthbip/ nprvp(nset)
       logical ifprjp
