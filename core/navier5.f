@@ -951,14 +951,9 @@ c
       dtime = time  - timel
       atime = atime + dtime
 
-      ! dump freq
-      iastep = param(68)
-      if  (iastep.eq.0) iastep=param(15)   ! same as iostep
-      if  (iastep.eq.0) iastep=500
-
       ifverbose=.false.
       if (istep.le.10) ifverbose=.true.
-      if  (mod(istep,iastep).eq.0) ifverbose=.true.
+      if  (ifoutfld) ifverbose=.true.
 
       if (atime.ne.0..and.dtime.ne.0.) then
          if(nio.eq.0) write(6,*) 'Compute statistics ...'
@@ -993,7 +988,7 @@ c
       endif
 c
 c-----------------------------------------------------------------------
-      if ( (mod(istep,iastep).eq.0.and.istep.gt.1) .or.lastep.eq.1) then
+      if (ifoutfld) then
 
          time_temp = time
          time      = atime   ! Output the duration of this avg
